@@ -10,8 +10,16 @@
 #ifndef _ECS_H_
 #define _ECS_H_
 
+#ifdef ECS_IMPLEMENTATION
+
 #ifdef ECS_INCLUDE
 #include ECS_INCLUDE
+#endif
+
+#ifndef ECS_INCLUDE
+// TODO: default defines for components so the program doesn't crash
+#endif
+
 #endif
 
 #define MAX_ENTITIES 64
@@ -35,6 +43,7 @@ typedef int Signature;
 	c components[MAX_ENTITIES]; \
 	Entity ent_to_comp_idx[MAX_ENTITIES]; \
 	Entity comp_idx_to_ent[MAX_ENTITIES]; \
+	int num_components; \
 } Components_##c; \
 
 COMPONENTS
@@ -87,6 +96,9 @@ void init_ecs(ECS *ecs) {
 	ecs->free_ent_cursor = MAX_ENTITIES-1;
 
 	// TODO: component arrays
+	#define Component(c) ecs->components_##c.num_components=0;
+	COMPONENTS
+	#undef Component
 
 	//ecs->systems = { 0 };
 }
@@ -119,6 +131,32 @@ void remove_entity(ECS *ecs, Entity ent) {
 }
 
 
+
+/** COMPONENT FNS **/
+// Pointers are tricky, because they can outdate when you change components on an entity. Be careful!
+void* add_component(ECS *ecs, Entity ent, Components comp) {
+
+	// TODO: validate entity is real n stuff
+	// TODO: update signature
+
+	
+
+	#define Component(c) if (comp == C_##c) {  \
+		Components_##c *comp_array = &ecs->components_##c; \
+		c *component = &comp_array->components[comp_array->num_components]; \
+		comp_array->ent_to_comp_idx[ent] = comp_array->num_components; \
+		comp_array->comp_idx_to_ent[comp_array->num_components] = ent; \
+		comp_array->num_components++; \
+		return component; \
+	} \
+
+	COMPONENTS
+
+	#undef Component
+
+	return 0;
+
+}
 
 
 /** Component Fns */
