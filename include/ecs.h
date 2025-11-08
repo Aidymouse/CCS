@@ -22,7 +22,7 @@
 // TODO: default defines for components so the program doesn't crash
 #endif
 
-#endif
+#endif // ECS_IMPLEMENTATION - though it's used again
 
 
 #define MAX_ENTITIES 64
@@ -111,7 +111,7 @@ void init_ecs(ECS *ecs) {
 	}
 	ecs->free_ent_cursor = MAX_ENTITIES-1;
 
-	// TODO: component arrays
+	// TODO: component arrays (right now we only set the num components)
 	#define Component(c) ecs->components_##c.num_components=0;
 	COMPONENTS
 	#undef Component
@@ -145,6 +145,8 @@ void remove_entity(ECS *ecs, Entity ent) {
 	ecs->signatures[ent-1] = 0;
 	ecs->free_ent_cursor += 1;
 	ecs->free_entities[ecs->free_ent_cursor] = ent;
+
+	// TODO: unregister from systems and components
 }
 
 
@@ -166,10 +168,13 @@ void* add_component(ECS *ecs, Entity ent, Components comp) {
 		return NULL;
 	}
 
-	if (GetBit(*sig, comp) == 0) { 
+	//int ca = comp+1;
+	if (GetBit(*sig, (comp+1)) == 1) { 
 		printf("Can't add %s to Entity %d, it already has it\n", ComponentNames[comp], ent);
 		return NULL;
 	}
+
+	SetBit(*sig, (comp+1));
 
 	#define Component(c) if (comp == C_##c) {  \
 		Components_##c *comp_array = &ecs->components_##c; \
@@ -186,6 +191,9 @@ void* add_component(ECS *ecs, Entity ent, Components comp) {
 
 	return 0;
 
+}
+
+void remove_component(ECS *ecs, Entity ent, Components comp) {
 }
 
 
@@ -216,6 +224,6 @@ void* add_component_to_entity() {
 
 //#undef X
 
-#endif // _ECS_IMPL_
+#endif // ECS_IMPLEMENTATION
 
 #endif // _ECS_H_
