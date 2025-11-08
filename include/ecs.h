@@ -12,6 +12,8 @@
 
 #ifdef ECS_IMPLEMENTATION
 
+#include <stdint.h>
+
 #ifdef ECS_INCLUDE
 #include ECS_INCLUDE
 #endif
@@ -22,9 +24,15 @@
 
 #endif
 
+
 #define MAX_ENTITIES 64
-#define MAX_COMPONENTS 64
+#define MAX_COMPONENTS 32
 #define MAX_SYSTEMS 8
+
+// Stolen from stack overflow
+#define GetBit(var, bit) ((var & (1 << bit)) != 0) // Returns true / false if bit is set
+#define SetBit(var, bit) (var |= (1 << bit))
+#define FlipBit(var, bit) (var ^= (1 << bit))
 
 
 
@@ -35,8 +43,14 @@ typedef enum Components {
 } Components;
 #undef Component
 
+#define Component(c) #c,
+const char* ComponentNames[] = {
+	COMPONENTS
+};
+#undef Component
+
 typedef int Entity;
-typedef int Signature;
+typedef uint32_t Signature; // Limits max components to 32 tho...
 
 /** Component Arrays **/
 #define Component(c) typedef struct Components_##c { \
@@ -80,13 +94,15 @@ typedef struct ECS {
 
 
 void init_ecs(ECS *ecs);
-Signature get_signature_for_entity(ECS *ecs, Entity ent);
+Signature* get_signature_for_entity(ECS *ecs, Entity ent);
 Entity add_entity(ECS *ecs);
 void remove_entity(ECS *ecs, Entity ent);
 
 #ifdef ECS_IMPLEMENTATION
 
-/** ECS METHODS */
+/*****************/
+/** ECS METHODS **/
+/*****************/
 
 void init_ecs(ECS *ecs) {
 	for (int e = 0; e < MAX_ENTITIES; e++) {
@@ -103,8 +119,9 @@ void init_ecs(ECS *ecs) {
 	//ecs->systems = { 0 };
 }
 
-Signature get_signature_for_entity(ECS *ecs, Entity ent) {
-	return ecs->signatures[ent-1]; // -1 as 0 is not a valid entity ID
+/* Get's an entities signature */
+Signature* get_signature_for_entity(ECS *ecs, Entity ent) {
+	return &ecs->signatures[ent-1]; // -1 as 0 is not a valid entity ID
 }
 
 /* Adds an entity, returning it's ID. 0 is not a valid Entity ID, so this can be used like a boolean to see if an entity was returned */
@@ -120,7 +137,7 @@ Entity add_entity(ECS *ecs) {
 }
 
 void remove_entity(ECS *ecs, Entity ent) {
-	if (get_signature_for_entity(ecs, ent) == 0) {
+	if (*get_signature_for_entity(ecs, ent) == 0) {
 		// This entity doesn't exist actually
 		return;
 	}
@@ -131,15 +148,28 @@ void remove_entity(ECS *ecs, Entity ent) {
 }
 
 
+/***********************/
+/** COMPONENT METHODS **/
+/***********************/
 
-/** COMPONENT FNS **/
 // Pointers are tricky, because they can outdate when you change components on an entity. Be careful!
+/** Adds a component to an entity, then returns a pointer to it (for your own init purposes) */
 void* add_component(ECS *ecs, Entity ent, Components comp) {
 
 	// TODO: validate entity is real n stuff
 	// TODO: update signature
 
-	
+	Signature *sig = get_signature_for_entity(ecs, ent);
+
+	if (*sig == 0) { 
+		printf("Can't add %s to Entity %d, entity does not exist\n", ComponentNames[comp], ent);
+		return NULL;
+	}
+
+	if (GetBit(*sig, comp) == 0) { 
+		printf("Can't add %s to Entity %d, it already has it\n", ComponentNames[comp], ent);
+		return NULL;
+	}
 
 	#define Component(c) if (comp == C_##c) {  \
 		Components_##c *comp_array = &ecs->components_##c; \
@@ -186,6 +216,6 @@ void* add_component_to_entity() {
 
 //#undef X
 
-#endif // _ECD_IMPL_
+#endif // _ECS_IMPL_
 
 #endif // _ECS_H_
