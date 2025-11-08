@@ -21,34 +21,31 @@ int main() {
 
 	init_ecs(&ecs);	
 
-	Entity e = add_entity(&ecs);
 
-	Signature *s = get_signature_for_entity(&ecs, e);
-	printf("Sig for %d: %d\n", e, *s);
 
 	//remove_entity(&ecs, e);
 	//s = get_signature_for_entity(&ecs, e);
 	//printf("Sig for %d: %d\n", e, *s);
 
-	Position *p = add_component(&ecs, 1, C_Position);
-	Velocity *v = add_component(&ecs, 1, C_Velocity);
-	//v->x_speed = 10;
+	/** Add Entity **/
+	Entity e = add_entity(&ecs);
+	if (!e) {
+		printf("Failed to add entity");
+		return 1;
+	}
 
-	//printf("Position component %f, %f\n", p->x, p->y);
-	//printf("Velocity component %f, %f\n", v->x_speed, v->y_speed);
+	/** Add Components **/
+	Position *p = add_component(&ecs, e, C_Position);
 
-	printf("%d%d%d%d%d\n",
-		GetBit(*s, 4),
-		GetBit(*s, 3),
-		GetBit(*s, 2),
-		GetBit(*s, 1),
-		GetBit(*s, 0)
-	);
 
-	// Wow, pointers are scary.
-	// This position can easily become outdated
-	// Maybe there should be a set component function that takes a pointer to a struct to make sure we don't have ugly bugs
-	// Alternatively, don't remove entities while using their components!
+	/** Remove Entity **/
+	remove_entity(&ecs, e);
+	if (entity_exists(&ecs, e)) {
+		printf("Failed to remove entity");
+		return 1;
+	}
+
+
 
 
 	return 0;
