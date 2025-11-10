@@ -1,0 +1,24 @@
+{
+  "configurations": {
+    "Launch": {
+      "adapter": "CodeLLDB",
+      "filetypes": [ "cpp", "c", "objc", "rust" ], 
+      "configuration": {
+        "request": "launch",
+        "program": "./ECS",
+        "cwd": ".",
+        "externalConsole": true,
+        "MIMode": "lldb"
+      }
+    },
+    "Attach": {
+      "adapter": "CodeLLDB",
+      "filetypes": [ "cpp", "c", "objc", "rust" ], 
+      "configuration": {
+        "request": "attach",
+        "program": "./ECS",
+        "MIMode": "lldb"
+      }
+    }
+  }
+}

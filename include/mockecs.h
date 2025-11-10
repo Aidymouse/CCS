@@ -21,10 +21,6 @@
 #include ECS_INCLUDE
 #endif
 
-#ifndef ECS_INCLUDE
-// TODO: default defines for components so the program doesn't crash
-#endif
-
 #endif // ECS_IMPLEMENTATION - though it's used again
 
 
@@ -36,41 +32,40 @@
 // TODO: credit
 #define GetBit(var, bit) ((var & (1 << bit)) != 0) // Returns true / false if bit is set
 #define SetBit(var, bit) (var |= (1 << bit))
-#define UnsetBit(var, bit) (var -= (1 << bit))
 #define FlipBit(var, bit) (var ^= (1 << bit))
 
-
-
 /** Construct components enum **/
-#define Component(c) C_##c,
 typedef enum Components {
-	COMPONENTS
+	C_Position,
+	C_Velocity
 } Components;
-#undef Component
 
 // Component name strings for logging
-#define Component(c) #c,
 const char* ComponentNames[] = {
-	COMPONENTS
+	"Position",
+	"Velocity"
 };
-#undef Component
 
 /** ECS Typedefs **/
 typedef int Entity;
 typedef uint32_t Signature; // Limits max components to 32 tho...
 
 /** Component Arrays **/
-#define Component(c) typedef struct Components_##c { \
-	c components[MAX_ENTITIES]; \
-	Entity ent_to_comp_idx[MAX_ENTITIES]; \
-	Entity comp_idx_to_ent[MAX_ENTITIES]; \
-	int num_components; \
-} Components_##c; \
+typedef struct Components_Position {
+	Position components[MAX_ENTITIES];
+	Entity ent_to_comp_idx[MAX_ENTITIES];
+	Entity comp_idx_to_ent[MAX_ENTITIES];
+	int num_components;
+} Components_Position;
 
-COMPONENTS
+typedef struct Components_Velocity {
+	Velocity components[MAX_ENTITIES];
+	Entity ent_to_comp_idx[MAX_ENTITIES];
+	Entity comp_idx_to_ent[MAX_ENTITIES];
+	int num_components;
+} Components_Velocity;
 
-#undef Component
-
+//void remove_component
 
 /** System Data **/
 typedef struct System {
@@ -91,9 +86,8 @@ typedef struct ECS {
 	Signature signatures[MAX_ENTITIES];
 
 	/** Add component arrays **/
-	#define Component(c) Components_##c components_##c;
-	COMPONENTS
-	#undef Component
+	Components_Position components_Position;
+	Components_Velocity components_Velocity;
 	
 	System systems[MAX_SYSTEMS];
 } ECS;
@@ -126,18 +120,18 @@ void init_ecs(ECS *ecs) {
 	ecs->free_ent_cursor = MAX_ENTITIES-1;
 
 	// TODO: component arrays (right now we only set the num components)
-	#define Component(c) ecs->components_##c.num_components=0; \
-	for (int i=0; i<MAX_ENTITIES; i++) { \
-		ecs->components_##c.components[i] = (c){ 0 }; \
-		ecs->components_##c.comp_idx_to_ent[i] = 0; \
-		ecs->components_##c.ent_to_comp_idx[i] = -1; \
-	} \
+	ecs->components_Position.num_components=0;
+	for (int i=0; i<MAX_ENTITIES; i++) {
+		ecs->components_Position.components[i] = (Position){ 0 };
+		ecs->components_Position.comp_idx_to_ent[i] = 0;
+		ecs->components_Position.ent_to_comp_idx[i] = -1;
 
-	COMPONENTS
+		ecs->components_Velocity.components[i] = (Velocity){ 0 };
+		ecs->components_Velocity.comp_idx_to_ent[i] = 0;
+		ecs->components_Velocity.ent_to_comp_idx[i] = -1;
+	}
 
-	#undef Component
 
-	//ecs->systems = { 0 };
 }
 
 
@@ -204,18 +198,24 @@ void* add_component(ECS *ecs, Entity ent, Components comp) {
 
 	SetBit(*sig, (comp+1));
 
-	#define Component(c) if (comp == C_##c) { \
-		Components_##c *comp_array = &ecs->components_##c; \
-		c *component = &comp_array->components[comp_array->num_components]; \
-		comp_array->ent_to_comp_idx[ent-1] = comp_array->num_components; \
-		comp_array->comp_idx_to_ent[comp_array->num_components] = ent; \
-		comp_array->num_components++; \
-		return component; \
-	} \
+	if (comp == C_Position) {
+		Components_Position *comp_array = &ecs->components_Position;
+		Position *component = &comp_array->components[comp_array->num_components];
+		comp_array->ent_to_comp_idx[ent-1] = comp_array->num_components;
+		comp_array->comp_idx_to_ent[comp_array->num_components] = ent;
+		comp_array->num_components++;
+		return component;
+	}
 
-	COMPONENTS
+	if (comp == C_Velocity) {
+		Components_Velocity *comp_array = &ecs->components_Velocity;
+		Velocity *component = &comp_array->components[comp_array->num_components];
+		comp_array->ent_to_comp_idx[ent-1] = comp_array->num_components;
+		comp_array->comp_idx_to_ent[comp_array->num_components] = ent;
+		comp_array->num_components++;
+		return component;
+	}
 
-	#undef Component
 
 	return 0;
 
@@ -228,40 +228,65 @@ void remove_component(ECS *ecs, Entity ent, Components comp) {
 		return;
 	}
 
-	Signature *sig = get_signature_for_entity(ecs, ent);
-	UnsetBit(*sig, (comp+1));
 	
-	#define Component(c) if (comp == C_##c) { \
-		Components_##c *comp_array = &ecs->components_##c; \
-		int comp_idx = comp_array->ent_to_comp_idx[ent-1]; \
-		int last_idx = comp_array->num_components-1; \
-\
-		Entity at_end = comp_array->comp_idx_to_ent[last_idx]; \
-		comp_array->ent_to_comp_idx[at_end-1] = comp_idx; \
-		comp_array->comp_idx_to_ent[comp_idx] = at_end; \
-\
-		comp_array->ent_to_comp_idx[ent-1] = -1; \
-		comp_array->comp_idx_to_ent[last_idx] = 0; \
-\
-		comp_array->components[comp_idx] = comp_array->components[last_idx]; \
-\
-		comp_array->num_components -= 1; \
-	} \
+	/* Generic */
+	if (comp == C_Position) {
+		Components_Position *comp_array = &ecs->components_Position;
+		int comp_idx = comp_array->ent_to_comp_idx[ent-1];
+		int last_idx = comp_array->num_components-1;
 
-	COMPONENTS
+		Entity at_end = comp_array->comp_idx_to_ent[last_idx];
+		comp_array->ent_to_comp_idx[at_end-1] = comp_idx;
+		comp_array->comp_idx_to_ent[comp_idx] = at_end;
 
-	#undef Component
+		comp_array->ent_to_comp_idx[ent-1] = -1;
+		comp_array->comp_idx_to_ent[last_idx] = 0;
 
-	// TODO: unregister from systems
+		comp_array->components[comp_idx] = comp_array->components[last_idx];
+		comp_array->num_components -= 1;
+	}
+	if (comp == C_Velocity) {
+		Components_Velocity *comp_array = &ecs->components_Velocity;
+		int comp_idx = comp_array->ent_to_comp_idx[ent-1];
+		int last_idx = comp_array->num_components-1;
+
+		Entity at_end = comp_array->comp_idx_to_ent[last_idx];
+		comp_array->ent_to_comp_idx[at_end-1] = comp_idx;
+		comp_array->comp_idx_to_ent[comp_idx] = at_end;
+
+		comp_array->ent_to_comp_idx[ent-1] = -1;
+		comp_array->comp_idx_to_ent[last_idx] = 0;
+
+		comp_array->components[comp_idx] = comp_array->components[last_idx];
+		comp_array->num_components -= 1;
+	}
+	/* /Generic */
+
 
 }
 
 
+/** Component Fns */
+// Might do it this way
+/*
+#define Component(c) *##c add_##c##_to_entity(ECS *ecs, Entity *entity) { \
+	}
 
-/*********************/
-/** SYSTEM FUNCTONS **/
-/*********************/
+void remove_component_from_entity() {
+}
 
+void* add_component_to_entity() {
+	return 0;
+}
+*/
+ 
+// TODO
+
+#undef Component
+
+
+
+/** System functons **/
 //#define X(c) void sys_##c(ECS *ecs, System *sys, Entity ent);
 
 //SYSTEMS
@@ -269,5 +294,6 @@ void remove_component(ECS *ecs, Entity ent, Components comp) {
 //#undef X
 
 #endif // ECS_IMPLEMENTATION
-
 #endif // _ECS_H_
+
+

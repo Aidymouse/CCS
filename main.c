@@ -19,13 +19,8 @@ int main() {
 
 	ECS ecs;
 
-	init_ecs(&ecs);	
+	init_ecs(&ecs);
 
-
-
-	//remove_entity(&ecs, e);
-	//s = get_signature_for_entity(&ecs, e);
-	//printf("Sig for %d: %d\n", e, *s);
 
 	/** Add Entity **/
 	Entity e = add_entity(&ecs);
@@ -34,9 +29,21 @@ int main() {
 		return 1;
 	}
 
+	Entity e2 = add_entity(&ecs);
+
 	/** Add Components **/
 	Position *p = add_component(&ecs, e, C_Position);
+	Position *p2 = add_component(&ecs, e2, C_Position);
 
+	for (int i=0; i<10; i++) {
+		p->x += 1;
+	}
+
+	/** Remove Components **/
+	remove_component(&ecs, e, C_Position);
+
+	for (int i=0; i<10; i++) {
+	}
 
 	/** Remove Entity **/
 	remove_entity(&ecs, e);

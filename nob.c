@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
 	nob_cmd_append(&cmd, "clang", "-o", PROGRAM_NAME);
 	nob_cmd_append(&cmd, "main.c");
 
+	nob_cmd_append(&cmd, "-g");
 
 	nob_cmd_append(&cmd, "-Iinclude");
 
