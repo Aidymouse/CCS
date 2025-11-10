@@ -75,7 +75,9 @@ COMPONENTS
 /** System Data **/
 typedef struct System {
 	Entity registered_entities[MAX_ENTITIES];
+	Entity ent_to_reg_idx[MAX_ENTITIES]; // Entity-1 is index into this array = idx into registered arr
 	Signature required_signature;
+	int num_registered;
 } System;
 
 
@@ -136,6 +138,10 @@ void init_ecs(ECS *ecs) {
 	COMPONENTS
 
 	#undef Component
+
+	for (int i=0; i<MAX_SYSTEMS; i++) {
+		ecs->systems[i] = { 0 };
+	}
 
 	//ecs->systems = { 0 };
 }
@@ -261,6 +267,25 @@ void remove_component(ECS *ecs, Entity ent, Components comp) {
 /*********************/
 /** SYSTEM FUNCTONS **/
 /*********************/
+
+// TODO: test
+void register_with_system(ECS *ecs, Entity ent, System *system) {
+	system->registered_entities[system->num_registered] = ent;
+	system->ent_to_reg_idx[ent-1] = system->num_registered;
+	system->num_registered += 1;
+}
+
+void deregister_with_system(ECS *ecs, Entity ent, System *system) {
+	int ent_idx = system->ent_to_reg_idx[ent-1];
+	int last_idx = system->num_registered-1;
+	Entity last_ent = system->registered_entities[last_idx];
+
+	system->registered_entities[ent_idx] = system->registered_entities[last_idx];
+
+	system->ent_to_reg_idx[last_ent-1] = ent_idx;
+
+	system->num_registered -= 1;
+}
 
 //#define X(c) void sys_##c(ECS *ecs, System *sys, Entity ent);
 
