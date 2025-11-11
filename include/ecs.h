@@ -13,6 +13,7 @@
 #ifdef ECS_IMPLEMENTATION
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -80,6 +81,17 @@ typedef struct System {
 	int num_registered;
 } System;
 
+#define System(name, sig) S_##name,
+typedef enum Systems {
+	SYSTEMS
+} Systems;
+#undef System
+
+#define System(name, sig) #name,
+const char* SystemNames[] = {
+	SYSTEMS
+};
+#undef System
 
 
 
@@ -113,6 +125,10 @@ bool entity_has_component(ECS *ecs, Entity ent, Components comp);
 
 void* add_component(ECS *ecs, Entity ent, Components comp);
 void remove_component(ECS *ecs, Entity ent, Components comp);
+void* get_component(ECS *ecs, Entity ent, Components comp);
+
+void register_with_system(ECS *ecs, Entity ent, System *system);
+void deregister_from_system(ECS *ecs, Entity ent, System *system);
 
 #ifdef ECS_IMPLEMENTATION
 
@@ -139,9 +155,23 @@ void init_ecs(ECS *ecs) {
 
 	#undef Component
 
+
+	// Clear out systems
 	for (int i=0; i<MAX_SYSTEMS; i++) {
-		ecs->systems[i] = { 0 };
+		ecs->systems[i] = (System){ 0 };
+		for (int e=0; e<MAX_ENTITIES; e++) {
+			ecs->systems[i].ent_to_reg_idx[e] = -1;
+		}
 	}
+	
+	// Set system signatures
+	int sys_idx=0;
+	#define System(name, sig) ecs->systems[sys_idx].required_signature = sig; \
+	sys_idx += 1; \
+
+	SYSTEMS
+	
+	#undef System
 
 	//ecs->systems = { 0 };
 }
@@ -209,7 +239,18 @@ void* add_component(ECS *ecs, Entity ent, Components comp) {
 	}
 
 	SetBit(*sig, (comp+1));
+	
+	// Register with systems
+	for (int i=0; i<MAX_SYSTEMS; i++) {
+		System *system = &ecs->systems[i];
+		if (system->required_signature == 0) { break; }
 
+		if ( (system->required_signature & *sig) == system->required_signature) {
+			register_with_system(ecs, ent, system);
+		}
+	}
+
+	// Add the component
 	#define Component(c) if (comp == C_##c) { \
 		Components_##c *comp_array = &ecs->components_##c; \
 		c *component = &comp_array->components[comp_array->num_components]; \
@@ -222,6 +263,7 @@ void* add_component(ECS *ecs, Entity ent, Components comp) {
 	COMPONENTS
 
 	#undef Component
+
 
 	return 0;
 
@@ -262,6 +304,25 @@ void remove_component(ECS *ecs, Entity ent, Components comp) {
 
 }
 
+void* get_component(ECS *ecs, Entity ent, Components comp) {
+
+	if (!entity_has_component(ecs, ent, comp)) {
+		printf("Can't get %s from Entity %d, it does not have it!\n", ComponentNames[comp], ent);
+		return 0;
+	}
+
+	#define Component(c) if (comp == C_##c) { \
+		Components_##c *comp_array = &ecs->components_##c; \
+		int comp_idx = comp_array->ent_to_comp_idx[ent-1]; \
+		return &comp_array->components[comp_idx]; \
+	} \
+
+	COMPONENTS
+
+	#undef Component
+
+	return 0;
+}
 
 
 /*********************/
@@ -275,14 +336,17 @@ void register_with_system(ECS *ecs, Entity ent, System *system) {
 	system->num_registered += 1;
 }
 
-void deregister_with_system(ECS *ecs, Entity ent, System *system) {
-	int ent_idx = system->ent_to_reg_idx[ent-1];
+void deregister_from_system(ECS *ecs, Entity ent, System *system) {
+	int ents_idx = system->ent_to_reg_idx[ent-1];
 	int last_idx = system->num_registered-1;
 	Entity last_ent = system->registered_entities[last_idx];
 
-	system->registered_entities[ent_idx] = system->registered_entities[last_idx];
+	system->registered_entities[ents_idx] = system->registered_entities[last_idx];
+	system->registered_entities[last_idx] = 0; // Not technically needed
 
-	system->ent_to_reg_idx[last_ent-1] = ent_idx;
+	system->ent_to_reg_idx[last_ent-1] = ents_idx;
+
+	system->ent_to_reg_idx[ent-1] = -1; // Not technically needed
 
 	system->num_registered -= 1;
 }
