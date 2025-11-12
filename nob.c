@@ -27,12 +27,13 @@ int main(int argc, char **argv) {
 
 	nob_cmd_append(&cmd, "-Iinclude");
 
+	nob_cmd_append(&cmd, "-L./lib/linux");
+	nob_cmd_append(&cmd, "-Wl,-rpath,./lib/linux");
+	nob_cmd_append(&cmd, "-lraylib");
+
 	// Libraries
 	/*
 	#if defined(TARGET_UNIX)
-		nob_cmd_append(&cmd, "-L./lib/linux");
-		nob_cmd_append(&cmd, "-Wl,-rpath,./lib/linux");
-		nob_cmd_append(&cmd, "-lraylib");
 
 	#elif defined(TARGET_WIN32)
 		nob_cmd_append(&cmd, "-L./lib/win32");
