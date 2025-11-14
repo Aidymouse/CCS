@@ -21,29 +21,11 @@ int main(int argc, char **argv) {
 	Nob_Cmd cmd = { 0 };
 
 	nob_cmd_append(&cmd, "clang", "-o", PROGRAM_NAME);
-	nob_cmd_append(&cmd, "main.c");
+	nob_cmd_append(&cmd, "test.c");
 
 	nob_cmd_append(&cmd, "-g");
 
 	nob_cmd_append(&cmd, "-Iinclude");
-
-	nob_cmd_append(&cmd, "-L./lib/linux");
-	nob_cmd_append(&cmd, "-Wl,-rpath,./lib/linux");
-	nob_cmd_append(&cmd, "-lraylib");
-
-	// Libraries
-	/*
-	#if defined(TARGET_UNIX)
-
-	#elif defined(TARGET_WIN32)
-		nob_cmd_append(&cmd, "-L./lib/win32");
-		nob_cmd_append(&cmd, "-Wl,-rpath,./lib/win32");
-		nob_cmd_append(&cmd, "-lraylibdll");
-		nob_cmd_append(&cmd, "-mwindows");
-
-	#endif
-	*/
-
 
 	// Other stuff
 	nob_cmd_append(&cmd, "-lm");
