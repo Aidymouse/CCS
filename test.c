@@ -3,6 +3,11 @@
 #include "components.h"
 
 #define ECS_IMPLEMENTATION
+
+
+#include "systems.h"
+#include "components.h"
+
 #include "ecs.h"
 
 #define ecstest(condition, message) if (condition == false) { \
@@ -17,13 +22,16 @@ int main() {
 	ccs_init_ecs(&ecs);
 
 	ecstest(ccs_entity_exists(&ecs, 1) == false, "Entity that does not exist exists");
+	printf("Pass: Non-existant Entity Not Exists\n");
 
 	/** Add Entity **/
 	Entity e = ccs_add_entity(&ecs);
 	ecstest(e != 0, "Failed to add entity");
 	ecstest(ecs.signatures[e-1] != 0, "Entity signature did not update");
+	printf("Pass: Add Entity\n");
 
 	Entity e2 = ccs_add_entity(&ecs);
+
 
 	/** Add Components **/
 	Position *p = ccs_add_component(&ecs, e, C_Position);
@@ -33,6 +41,10 @@ int main() {
 	ecstest(p!=0, "Position component returned bad pointer");
 	ecstest(p->x==0, "Position does not init x properly");
 	ecstest(p->y==0, "Position does not init y properly");
+
+	printf("Pass: Add Components\n");
+
+	/** Update Components **/
 
 	/** Remove Components **/
 	//remove_component(&ecs, e, C_Position);
@@ -49,10 +61,17 @@ int main() {
 		ps->y += vs->y_speed;
 	}
 
+	// TODO: test cases ?
+	//printf("Pass:  Entity");
+
+
 	/** Remove Entity **/
 	ccs_remove_entity(&ecs, e);
 	ecstest(ccs_entity_exists(&ecs, e) == false, "Entity not removed properly");
 
+	printf("Pass: Remove Entity\n");
+
+	printf("Yippee! All passed.\n");
 
 
 	return 0;

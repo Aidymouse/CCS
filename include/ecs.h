@@ -2,7 +2,7 @@
  *
  * Usage: 
  * 1. define CCS_CCS_COMPONENTS \ Component(<component name>, <component bit>) \ ... in components.h
- * 2. define CCS_CCS_SYSTEMS \ System(<component name>, <component enum 1> | <component enum 2> | ...) \ ... in systems.h 
+ * 2. define CCS_SYSTEMS \ System(<component name>, <component enum 1> | <component enum 2> | ...) \ ... in systems.h 
  * 3. include ecs.h
  *
  ** Example **
@@ -23,6 +23,7 @@
  * 		#include "ecs.h"
  */
 
+
 #ifndef _ECS_H_
 #define _ECS_H_
 
@@ -31,8 +32,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "components.h"
-#include "systems.h"
+
+// You need to make sure CCS_SYSTEMS and CCS_COMPONENTS are defined, along with any component structs
+
+// #include "components.h"
+// #include "systems.h"
 
 #define MAX_CCS_ENTITIES 5
 #define MAX_CCS_COMPONENTS 32
