@@ -59,12 +59,15 @@ typedef int Entity;
 typedef uint32_t Signature; // Limits max components to 32 tho...
 
 /** Construct components enum **/
+/** C_{component_name} **/
 #define Component(c, num) C_##c,
 typedef enum Components {
 	CCS_COMPONENTS
 } Components;
 #undef Component
 
+/** Construct enum of component to their bit position in the signature **/
+/** CB_{component_name} = 2 to the power of position **/
 #define Component(c, num) CB_##c = 1 << num,
 typedef enum ComponentBit {
 	CCS_COMPONENTS

@@ -4,7 +4,6 @@
 
 #define ECS_IMPLEMENTATION
 
-
 #include "systems.h"
 #include "components.h"
 
@@ -47,7 +46,7 @@ int main() {
 	/** Update Components **/
 
 	/** Remove Components **/
-	//remove_component(&ecs, e, C_Position);
+	remove_component(&ecs, e, C_Position);
 
 
 	/** Basic system **/
