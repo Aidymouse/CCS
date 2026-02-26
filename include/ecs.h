@@ -1,9 +1,21 @@
-/** An Entity-Component-System implemented in C using macro trickery.
+/** An CCS_Entity-Component-CCS_System implemented in C using macro trickery.
  *
- * Usage: 
+ * Usage:  TODO:
  * 1. define CCS_CCS_COMPONENTS \ Component(<component name>, <component bit>) \ ... in components.h
  * 2. define CCS_SYSTEMS \ System(<component name>, <component enum 1> | <component enum 2> | ...) \ ... in systems.h 
  * 3. include ecs.h
+ *
+ ** Options **
+ * CCS_OPT_NO_HELPER_TYPES - if defined, helper types will not be generated. A helper type is a renamed typedef (e.g. CCS_Entity -> CCS_Entity)
+ *
+ ** Defines **
+ * MAX_CCS_ENTITIES
+ * MAX_CCS_COMPONENTS
+ * MAX_CCS_SYSTEMS
+ *
+ ** Vars **
+ * enum CCS_Components - format C_<component name>. Used to refer to components in the CCS
+ * enum CCS_ComponentBit - Enum where the CB_<component name> = the bit position in a signature denoting that component. (I think this is unused?)
  *
  ** Example **
  *
@@ -17,15 +29,15 @@
  *
  * systems.h
  * 		#define CCS_SYSTEMS \
- * 			System(Move, C_Position | C_Velocity) \
+ * 			CCS_System(Move, C_Position | C_Velocity) \
  *
  * main.c
  * 		#include "ecs.h"
  */
 
 
-#ifndef _ECS_H_
-#define _ECS_H_
+#ifndef _CCS_H_
+#define _CCS_H_
 
 #include <stdint.h>
 #include <stdio.h>
@@ -54,92 +66,102 @@
 /** STRUCTS **/
 /*************/
 
-/** ECS Typedefs **/
-typedef int Entity;
-typedef uint32_t Signature; // Limits max components to 32 tho...
+/** CCS Typedefs **/
+typedef int CCS_Entity;
+typedef uint32_t CCS_Signature; // Limits max components to 32 tho...
+
 
 /** Construct components enum **/
 #define Component(c, num) C_##c,
-typedef enum Components {
+typedef enum CCS_Components {
 	CCS_COMPONENTS
-} Components;
+} CCS_Components;
 #undef Component
 
 #define Component(c, num) CB_##c = 1 << num,
-typedef enum ComponentBit {
+typedef enum CCS_ComponentBit {
 	CCS_COMPONENTS
-} ComponentBit;
+} CCS_ComponentBit;
 #undef Component
 
 
 /** Component Arrays **/
-#define Component(c, _) typedef struct Components_##c { \
+#define Component(c, _) typedef struct CCS_Components_##c { \
 	c components[MAX_CCS_ENTITIES]; \
-	Entity ent_to_comp_idx[MAX_CCS_ENTITIES]; \
-	Entity comp_idx_to_ent[MAX_CCS_ENTITIES]; \
+	CCS_Entity ent_to_comp_idx[MAX_CCS_ENTITIES]; \
+	CCS_Entity comp_idx_to_ent[MAX_CCS_ENTITIES]; \
 	int num_components; \
-} Components_##c; \
+} CCS_Components_##c; \
 
 CCS_COMPONENTS
 
 #undef Component
 
 #define System(name, sig) S_##name,
-typedef enum Systems {
+typedef enum CCS_Systems {
 	CCS_SYSTEMS
-} Systems;
+} CCS_Systems;
 #undef System
 
 
-/** System Data **/
-typedef struct System {
-	Entity registered_entities[MAX_CCS_ENTITIES];
-	Entity ent_to_reg_idx[MAX_CCS_ENTITIES]; // Entity-1 is index into this array = idx into registered arr
-	Signature required_signature;
+/** CCS_System Data **/
+typedef struct CCS_System {
+	CCS_Entity registered_entities[MAX_CCS_ENTITIES];
+	CCS_Entity ent_to_reg_idx[MAX_CCS_ENTITIES]; // CCS_Entity-1 is index into this array = idx into registered arr
+	CCS_Signature required_signature;
 	int num_registered;
-} System;
+} CCS_System;
 
-/* ECS */
-typedef struct ECS {
-	Entity free_entities[MAX_CCS_ENTITIES];
+/* CCS */
+typedef struct CCS {
+	CCS_Entity free_entities[MAX_CCS_ENTITIES];
 	int free_ent_cursor; // Points to latest free entity.
 
 	/* Ent id = idx into this arr */
-	Signature signatures[MAX_CCS_ENTITIES];
+	CCS_Signature signatures[MAX_CCS_ENTITIES];
 
 	/** Add component arrays **/
-	#define Component(c, _) Components_##c components_##c;
+	#define Component(c, _) CCS_Components_##c components_##c;
 	CCS_COMPONENTS
 	#undef Component
 	
-	System systems[MAX_CCS_SYSTEMS];
+	CCS_System systems[MAX_CCS_SYSTEMS];
 	int num_systems;
-} ECS;
+} CCS;
 
 
+/** OPTIONS **/
+
+/** For ease of use **/
+#ifndef CCS_OPT_NO_HELPER_TYPES
+	typedef CCS_Entity Entity;
+	typedef CCS_System System;
+	typedef CCS_Signature Signature;
+	typedef CCS ECS;
+#endif
 
 
 
 /** DECLARATIONS **/
 
-// ECS Methods
-void ccs_init_ecs(ECS *ecs);
-Entity ccs_add_entity(ECS *ecs);
-void ccs_remove_entity(ECS *ecs, Entity ent);
-Signature* ccs_get_signature_for_entity(ECS *ecs, Entity ent);
-bool ccs_entity_exists(ECS *ecs, Entity ent);
-bool ccs_entity_has_component(ECS *ecs, Entity ent, Components comp);
-bool ccs_entity_satisfies_signature(Signature entities, Signature test);
+// CCS Methods
+void ccs_init_ecs(CCS *ecs);
+CCS_Entity ccs_add_entity(CCS *ecs);
+void ccs_remove_entity(CCS *ecs, CCS_Entity ent);
+CCS_Signature* ccs_get_signature_for_entity(CCS *ecs, CCS_Entity ent);
+bool ccs_entity_exists(CCS *ecs, CCS_Entity ent);
+bool ccs_entity_has_component(CCS *ecs, CCS_Entity ent, CCS_Components comp);
+bool ccs_entity_satisfies_signature(CCS_Signature entities, CCS_Signature test);
 
-void* ccs_add_component(ECS *ecs, Entity ent, Components comp);
-void ccs_remove_component(ECS *ecs, Entity ent, Components comp);
-void* ccs_get_component(ECS *ecs, Entity ent, Components comp);
+void* ccs_add_component(CCS *ecs, CCS_Entity ent, CCS_Components comp);
+void ccs_remove_component(CCS *ecs, CCS_Entity ent, CCS_Components comp);
+void* ccs_get_component(CCS *ecs, CCS_Entity ent, CCS_Components comp);
 
-void ccs_register_with_system(ECS *ecs, Entity ent, System *system);
-void ccs_deregister_from_system(ECS *ecs, Entity ent, System *system);
+void ccs_register_with_system(CCS *ecs, CCS_Entity ent, CCS_System *system);
+void ccs_deregister_from_system(CCS *ecs, CCS_Entity ent, CCS_System *system);
 
 
-#ifdef ECS_IMPLEMENTATION
+#ifdef CCS_IMPLEMENTATION
 
 // Component name strings for logging
 #define Component(c, _) #c,
@@ -149,16 +171,16 @@ const char* ComponentNames[] = {
 #undef Component
 
 #define System(name, sig) #name,
-const char* SystemNames[] = {
+const char* CCS_SystemNames[] = {
 	CCS_SYSTEMS
 };
 #undef System
 
 /*****************/
-/** ECS METHODS **/
+/** CCS METHODS **/
 /*****************/
 
-void ccs_init_ecs(ECS *ecs) {
+void ccs_init_ecs(CCS *ecs) {
 	for (int e = 0; e < MAX_CCS_ENTITIES; e++) {
 		ecs->free_entities[e] = MAX_CCS_ENTITIES-e; // 0 is not a valid entity ID
 		ecs->signatures[e] = 0;
@@ -180,7 +202,7 @@ void ccs_init_ecs(ECS *ecs) {
 
 	// Clear out systems
 	for (int i=0; i<MAX_CCS_SYSTEMS; i++) {
-		ecs->systems[i] = (System){ 0 };
+		ecs->systems[i] = (CCS_System){ 0 };
 		for (int e=0; e<MAX_CCS_ENTITIES; e++) {
 			ecs->systems[i].ent_to_reg_idx[e] = -1;
 		}
@@ -196,7 +218,7 @@ void ccs_init_ecs(ECS *ecs) {
 	#undef System
 
 	ecs->num_systems = sys_idx;
-	printf("ECS: Number of Systems: %d\n", ecs->num_systems);
+	printf("CCS: Number of CCS_Systems: %d\n", ecs->num_systems);
 
 	//ecs->systems = { 0 };
 }
@@ -205,26 +227,26 @@ void ccs_init_ecs(ECS *ecs) {
 /** ENTITY METHODS **/
 /********************/
 
-/* Adds an entity, returning it's ID. 0 is not a valid Entity ID, so this can be used like a boolean to see if an entity was returned */
-Entity ccs_add_entity(ECS *ecs) {
+/* Adds an entity, returning it's ID. 0 is not a valid CCS_Entity ID, so this can be used like a boolean to see if an entity was returned */
+CCS_Entity ccs_add_entity(CCS *ecs) {
 	if (ecs->free_ent_cursor == -1) {
 		return 0;
 	}
 
-	Entity new_ent = ecs->free_entities[ecs->free_ent_cursor];
+	CCS_Entity new_ent = ecs->free_entities[ecs->free_ent_cursor];
 	ecs->free_entities[ecs->free_ent_cursor] = 0;
 	ecs->signatures[new_ent-1] = 1;
 	ecs->free_ent_cursor -= 1;
 	return new_ent;
 }
 
-void ccs_remove_entity(ECS *ecs, Entity ent) {
+void ccs_remove_entity(CCS *ecs, CCS_Entity ent) {
 	if (*ccs_get_signature_for_entity(ecs, ent) == 0) {
 		// This entity doesn't exist actually
 		return;
 	}
 
-	Signature *sig = ccs_get_signature_for_entity(ecs, ent);
+	CCS_Signature *sig = ccs_get_signature_for_entity(ecs, ent);
 
 	#define Component(c, _) if (GetBit(*sig, (C_##c + 1))) { \
 		ccs_remove_component(ecs, ent, C_##c); \
@@ -241,20 +263,20 @@ void ccs_remove_entity(ECS *ecs, Entity ent) {
 }
 
 /* Get's an entities signature */
-Signature* ccs_get_signature_for_entity(ECS *ecs, Entity ent) {
+CCS_Signature* ccs_get_signature_for_entity(CCS *ecs, CCS_Entity ent) {
 	return &ecs->signatures[ent-1]; // -1 as 0 is not a valid entity ID
 }
 
-bool ccs_entity_exists(ECS *ecs, Entity ent) {
+bool ccs_entity_exists(CCS *ecs, CCS_Entity ent) {
 	return (GetBit(*ccs_get_signature_for_entity(ecs, ent), 0));
 }
 
-bool ccs_entity_has_component(ECS *ecs, Entity ent, Components comp) {
-	Signature *sig = ccs_get_signature_for_entity(ecs, ent);
+bool ccs_entity_has_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
+	CCS_Signature *sig = ccs_get_signature_for_entity(ecs, ent);
 	return GetBit(*sig, (comp+1)) == 1;
 }
 
-bool ccs_entity_satisfies_signature(Signature entities, Signature test) {
+bool ccs_entity_satisfies_signature(CCS_Signature entities, CCS_Signature test) {
 	return (test & entities) == test;
 }
 
@@ -268,17 +290,17 @@ bool ccs_entity_satisfies_signature(Signature entities, Signature test) {
  * 1. Checks if the entity exists
  * 2. Checks if the entity already has the component
  * */
-void* ccs_add_component(ECS *ecs, Entity ent, Components comp) {
+void* ccs_add_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 
-	Signature *sig = ccs_get_signature_for_entity(ecs, ent);
+	CCS_Signature *sig = ccs_get_signature_for_entity(ecs, ent);
 
 	if (*sig == 0) { 
-		printf("ECS: Can't add %s to Entity %d, it does not exist\n", ComponentNames[comp], ent);
+		printf("CCS: Can't add %s to CCS_Entity %d, it does not exist\n", ComponentNames[comp], ent);
 		return NULL;
 	}
 
 	if (ccs_entity_has_component(ecs, ent, comp)) { 
-		printf("ECS: Can't add %s to Entity %d, it already has it\n", ComponentNames[comp], ent);
+		printf("CCS: Can't add %s to CCS_Entity %d, it already has it\n", ComponentNames[comp], ent);
 		return NULL;
 	}
 
@@ -286,17 +308,17 @@ void* ccs_add_component(ECS *ecs, Entity ent, Components comp) {
 	
 	// Register with systems
 	for (int i=0; i<ecs->num_systems; i++) {
-		System *system = &ecs->systems[i];
+		CCS_System *system = &ecs->systems[i];
 
 		if (ccs_entity_satisfies_signature(*sig, system->required_signature)) {
-			//printf("ECS: Entity %d qualifies for System %s (%d)\n", ent, SystemNames[i], i);
+			//printf("CCS: CCS_Entity %d qualifies for CCS_System %s (%d)\n", ent, CCS_SystemNames[i], i);
 			ccs_register_with_system(ecs, ent, system);
 		}
 	}
 
 	// Add the component (done last cos this will return)
 	#define Component(c, _) if (comp == C_##c) { \
-		Components_##c *comp_array = &ecs->components_##c; \
+		CCS_Components_##c *comp_array = &ecs->components_##c; \
 		c *component = &comp_array->components[comp_array->num_components]; \
 		comp_array->ent_to_comp_idx[ent-1] = comp_array->num_components; \
 		comp_array->comp_idx_to_ent[comp_array->num_components] = ent; \
@@ -319,22 +341,22 @@ void* ccs_add_component(ECS *ecs, Entity ent, Components comp) {
  * 3. Updates the component array (moves last component to current slot, remove the last componnt, updates records)
  * 4. Checks if the entity no longer qualifies for any systems and deregisters if so
  */
-void ccs_remove_component(ECS *ecs, Entity ent, Components comp) {
+void ccs_remove_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 
 	if (!ccs_entity_has_component(ecs, ent, comp)) {
-		printf("ECS: Tried to remove %s from Entity %d, but it does not have it\n", ComponentNames[comp], ent);
+		printf("CCS: Tried to remove %s from CCS_Entity %d, but it does not have it\n", ComponentNames[comp], ent);
 		return;
 	}
 
-	Signature *sig = ccs_get_signature_for_entity(ecs, ent);
+	CCS_Signature *sig = ccs_get_signature_for_entity(ecs, ent);
 	UnsetBit(*sig, (comp+1));
 	
 	#define Component(c, _) if (comp == C_##c) { \
-		Components_##c *comp_array = &ecs->components_##c; \
+		CCS_Components_##c *comp_array = &ecs->components_##c; \
 		int comp_idx = comp_array->ent_to_comp_idx[ent-1]; \
 		int last_idx = comp_array->num_components-1; \
 \
-		Entity at_end = comp_array->comp_idx_to_ent[last_idx]; \
+		CCS_Entity at_end = comp_array->comp_idx_to_ent[last_idx]; \
 		comp_array->ent_to_comp_idx[at_end-1] = comp_idx; \
 		comp_array->comp_idx_to_ent[comp_idx] = at_end; \
 \
@@ -352,10 +374,10 @@ void ccs_remove_component(ECS *ecs, Entity ent, Components comp) {
 
 	// Remove from systems
 	for (int i=0; i<ecs->num_systems; i++) {
-		System *sys = &ecs->systems[i];
+		CCS_System *sys = &ecs->systems[i];
 
 		if (!ccs_entity_satisfies_signature(*sig, sys->required_signature)) {
-			//printf("ECS: Entity %d no longer qualifies for System %s\n", ent, SystemNames[i]);
+			//printf("CCS: CCS_Entity %d no longer qualifies for CCS_System %s\n", ent, CCS_SystemNames[i]);
 			ccs_deregister_from_system(ecs, ent, sys);
 		}
 		
@@ -367,15 +389,15 @@ void ccs_remove_component(ECS *ecs, Entity ent, Components comp) {
  * 1. Checks if entity has the component
  * 2. Acquires the component using records in component array
  */
-void* ccs_get_component(ECS *ecs, Entity ent, Components comp) {
+void* ccs_get_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 
 	if (!ccs_entity_has_component(ecs, ent, comp)) {
-		printf("ECS: Can't get %s from Entity %d, it does not have it!\n", ComponentNames[comp], ent);
+		printf("CCS: Can't get %s from CCS_Entity %d, it does not have it!\n", ComponentNames[comp], ent);
 		return 0;
 	}
 
 	#define Component(c, _) if (comp == C_##c) { \
-		Components_##c *comp_array = &ecs->components_##c; \
+		CCS_Components_##c *comp_array = &ecs->components_##c; \
 		int comp_idx = comp_array->ent_to_comp_idx[ent-1]; \
 		return &comp_array->components[comp_idx]; \
 	} \
@@ -393,17 +415,17 @@ void* ccs_get_component(ECS *ecs, Entity ent, Components comp) {
 /*********************/
 
 // TODO: test
-void ccs_register_with_system(ECS *ecs, Entity ent, System *system) {
+void ccs_register_with_system(CCS *ecs, CCS_Entity ent, CCS_System *system) {
 	if (system->ent_to_reg_idx[ent-1] != -1) { return; }
 	system->registered_entities[system->num_registered] = ent;
 	system->ent_to_reg_idx[ent-1] = system->num_registered;
 	system->num_registered += 1;
 }
 
-void ccs_deregister_from_system(ECS *ecs, Entity ent, System *system) {
+void ccs_deregister_from_system(CCS *ecs, CCS_Entity ent, CCS_System *system) {
 	int ents_idx = system->ent_to_reg_idx[ent-1];
 	int last_idx = system->num_registered-1;
-	Entity last_ent = system->registered_entities[last_idx];
+	CCS_Entity last_ent = system->registered_entities[last_idx];
 
 	system->registered_entities[ents_idx] = system->registered_entities[last_idx];
 	system->registered_entities[last_idx] = 0; // Not technically needed
@@ -416,12 +438,12 @@ void ccs_deregister_from_system(ECS *ecs, Entity ent, System *system) {
 }
 
 
-//#define X(c) void sys_##c(ECS *ecs, System *sys, Entity ent);
+//#define X(c) void sys_##c(CCS *ecs, CCS_System *sys, CCS_Entity ent);
 
 //CCS_SYSTEMS
 
 //#undef X
 
-#endif // ECS_IMPLEMENTATION
+#endif // CCS_IMPLEMENTATION
 
-#endif // _ECS_H_
+#endif // _CCS_H_

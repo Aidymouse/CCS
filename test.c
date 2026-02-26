@@ -2,7 +2,8 @@
 
 #include "components.h"
 
-#define ECS_IMPLEMENTATION
+//#define CCS_OPT_NO_HELPER_TYPES
+#define CCS_IMPLEMENTATION
 
 
 #include "systems.h"
