@@ -11,27 +11,34 @@
 
 #include "ccs.h"
 
-#define ecstest(condition, message) if (condition == false) { \
+#define ccstest(condition, message) if (condition == false) { \
 	printf("ECS TEST FAIL: "#message"\n");\
 	return 1;\
 } \
 	
+
+void component_tests() {
+}
 
 int main() {
 
 	ECS ecs;
 	ccs_init_ecs(&ecs);
 
-	ecstest(ccs_entity_exists(&ecs, 1) == false, "Entity that does not exist exists");
+	ccstest(ccs_entity_exists(&ecs, 1) == false, "Entity that does not exist exists");
 	printf("Pass: Non-existant Entity Not Exists\n");
 
 	/** Add Entity **/
 	Entity e = ccs_add_entity(&ecs);
-	ecstest(e != 0, "Failed to add entity");
-	ecstest(ecs.signatures[e-1] != 0, "Entity signature did not update");
+	ccstest(e != 0, "Failed to add entity");
+	ccstest(ecs.signatures[e-1] != 0, "Entity signature did not update");
 	printf("Pass: Add Entity\n");
 
 	Entity e2 = ccs_add_entity(&ecs);
+
+	// Add too many entities
+	Entity e3 = ccs_add_entity(&ecs);
+	ccstest(e3 == 0, "Entity added beyond range (or max entities > 2)")
 
 
 	/** Add Components **/
@@ -39,16 +46,20 @@ int main() {
 	Velocity *v = ccs_add_component(&ecs, e, C_Velocity);
 	Position *p2 = ccs_add_component(&ecs, e2, C_Position);
 
-	ecstest(p!=0, "Position component returned bad pointer");
-	ecstest(p->x==0, "Position does not init x properly");
-	ecstest(p->y==0, "Position does not init y properly");
+	ccstest(p!=0, "Position component returned bad pointer");
+	ccstest(p->x==0, "Position does not init x properly");
+	ccstest(p->y==0, "Position does not init y properly");
+
+	ccstest(ecs.components_Position.ent_to_comp_idx[e-1] == 0, "Entity mapped to wrong component idx");
 
 	printf("Pass: Add Components\n");
 
 	/** Update Components **/
 
 	/** Remove Components **/
-	//remove_component(&ecs, e, C_Position);
+	ccs_remove_component(&ecs, e, C_Position);
+	ccstest(ccs_get_component(&ecs, e, C_Position) == 0, "Component not removed");
+	ccstest(ecs.components_Position.ent_to_comp_idx[e-1] == -1, "Entity to Component Index failed to be updated on Remove");
 
 
 	/** Basic system **/
@@ -68,7 +79,7 @@ int main() {
 
 	/** Remove Entity **/
 	ccs_remove_entity(&ecs, e);
-	ecstest(ccs_entity_exists(&ecs, e) == false, "Entity not removed properly");
+	ccstest(ccs_entity_exists(&ecs, e) == false, "Entity not removed properly");
 
 	printf("Pass: Remove Entity\n");
 

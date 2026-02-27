@@ -9,7 +9,7 @@
 
 #include "nob.h"
 
-#define PROGRAM_NAME "ECS"
+#define PROGRAM_NAME "CCS_Tests"
 
 /* All paths assume target is created in the top level folder. */
 /* That is, to distribute, just delete all the C files n shit lmao */

@@ -50,7 +50,7 @@
 // #include "components.h"
 // #include "systems.h"
 
-#define MAX_CCS_ENTITIES 300
+#define MAX_CCS_ENTITIES 2
 #define MAX_CCS_COMPONENTS 32
 #define MAX_CCS_SYSTEMS 8
 
@@ -230,6 +230,7 @@ void ccs_init_ecs(CCS *ecs) {
 /* Adds an entity, returning it's ID. 0 is not a valid CCS_Entity ID, so this can be used like a boolean to see if an entity was returned */
 CCS_Entity ccs_add_entity(CCS *ecs) {
 	if (ecs->free_ent_cursor == -1) {
+		printf("CCS: Cannot add entity as we are full!\n");
 		return 0;
 	}
 
