@@ -50,7 +50,7 @@
 // #include "components.h"
 // #include "systems.h"
 
-#define MAX_CCS_ENTITIES 5
+#define MAX_CCS_ENTITIES 300
 #define MAX_CCS_COMPONENTS 32
 #define MAX_CCS_SYSTEMS 8
 
