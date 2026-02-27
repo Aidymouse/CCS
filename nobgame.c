@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
 
 	Nob_Cmd cmd = { 0 };
 
-	nob_cmd_append(&cmd, "clang", "-o", PROGRAM_NAME);
+	nob_cmd_append(&cmd, "clang", "-g", "-o", PROGRAM_NAME);
 	nob_cmd_append(&cmd, "main.c");
 
 	nob_cmd_append(&cmd, "-g");
