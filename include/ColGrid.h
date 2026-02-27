@@ -44,6 +44,7 @@ void cg_init_colgrid(CollisionGrid *cg);
 void cg_free_colgrid(CollisionGrid *cg);
 void cg_init_cell(CollisionGridCell *cell, int id, int init_inhabitants);
 void cg_update_index(CollisionGrid *cg, CollisionGridIndex *cg_index, float pos_x, float pos_y, float width, float height);
+void cg_remove_index(CollisionGrid *cg, CollisionGridIndex *cg_index);
 CollisionGridCell cg_get_cell_id_at_pos(CollisionGrid *cg, float pos_x, float pos_y);
 
 #ifdef COLGRID_IMPLEMENTATION
@@ -82,15 +83,18 @@ void cg_init_cell(CollisionGridCell *cell, int id, int init_inhabitants) {
 /** Takes an index and updates it and the colgrid based on a new position **/
 void cg_update_index(CollisionGrid *cg, CollisionGridIndex *cg_index, float pos_x, float pos_y, float width, float height) {
 
-	int cell_row = pos_y / CELL_SIZE;
-	int cell_col = pos_x / CELL_SIZE;
-
-	int cell_id = (cell_row * CELLS_ACROSS) + cell_col;
 
 	// Remove from current inabitation, if any
 	if (cg_index->inhabited[0] != -1) {
+		CollisionGridCell inhabited_cell = cg->cells[cg_index->inhabited[0]];
+		sba_remove(inhabited_cell.inhabitants, cg_index->id, inhabited_cell.num_inhabitants);
 		// TODO:
 	}
+
+	// Update index's inhabited cells
+	int cell_row = pos_y / CELL_SIZE;
+	int cell_col = pos_x / CELL_SIZE;
+	int cell_id = (cell_row * CELLS_ACROSS) + cell_col;
 
 	if (cell_id < 0 || cell_id >= NUM_CELLS) {
 		cg_index->inhabited[0] = -1; // Inhabit no cell
@@ -99,13 +103,24 @@ void cg_update_index(CollisionGrid *cg, CollisionGridIndex *cg_index, float pos_
 
 	cg_index->inhabited[0] = cell_id;
 
+	// Update cells inhabitants
 	CollisionGridCell *cell = &cg->cells[cell_id];
-	cell->inhabitants[cell->num_inhabitants] = cg_index->id;
-	cell->num_inhabitants++;
+	cell->num_inhabitants += sba_insert(cell->inhabitants, cg_index->id, cell->num_inhabitants);
 
 }
 
-// TODO: void cg_remove_index(CollisionGrid *cg, CollisionGridIndex *cg_index) { }
+void cg_remove_index(CollisionGrid *cg, CollisionGridIndex *index) { 
+	if (index->inhabited[0] == -1) { return; }
+
+	int cell_id = index->inhabited[0];
+
+	CollisionGridCell *cell = &cg->cells[cell_id];
+	cell->num_inhabitants -= sba_remove(cell->inhabitants, index->id, cell->num_inhabitants);
+
+	index->inhabited[0] = -1;
+
+
+}
 
 CollisionGridCell cg_get_cell_id_at_pos(CollisionGrid *cg, float pos_x, float pos_y) {
 	int cell_row = pos_y / CELL_SIZE;

@@ -1,9 +1,10 @@
 
+#define SWAPBACK_ARRAY_IMPLEMENTATION
+#include "SwapbackArray.h"
+
 #define COLGRID_IMPLEMENTATION
 #include "ColGrid.h"
 
-#define SWAPBACK_ARRAY_IMPLEMENTATION
-#include "SwapbackArray.h"
 
 #include "Collisions.h"
 
@@ -129,6 +130,10 @@ int main() {
 				if (point_in_square(mouse.x, mouse.y, r.x, r.y, r.width, r.height)) {
 
 					printf("Clicked entity %d\n", ent);
+
+					//cg_remove_index(&grid, c);
+					//in--;
+					ccs_remove_entity(&ecs, ent);
 				}
 			}
 
