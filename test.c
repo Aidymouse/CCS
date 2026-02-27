@@ -9,7 +9,7 @@
 #include "systems.h"
 #include "components.h"
 
-#include "ecs.h"
+#include "ccs.h"
 
 #define ecstest(condition, message) if (condition == false) { \
 	printf("ECS TEST FAIL: "#message"\n");\
