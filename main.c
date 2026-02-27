@@ -2,6 +2,11 @@
 #define COLGRID_IMPLEMENTATION
 #include "ColGrid.h"
 
+#define SWAPBACK_ARRAY_IMPLEMENTATION
+#include "SwapbackArray.h"
+
+#include "Collisions.h"
+
 /** Components **/
 #define CCS_COMPONENTS \
 	Component(Position, 1) \
@@ -16,13 +21,7 @@ typedef struct Position {
 } Position;
 
 // All colliders are squares these days
-typedef struct Collider {
-	float width;
-	float height;
-	float offset_x;
-	float offset_y;
-	ColGridIndex cg_index;
-} Collider;
+typedef CollisionGridIndex Collider;
 
 typedef struct Velocity {
 	float x;
@@ -45,22 +44,34 @@ typedef struct ManAI {
 #define VEC2_IMPLEMENTATION
 #include "Vec2.h"
 #include "raylib.h"
+#define COLLISIONS_IMPLEMENTATION
+#include "Collisions.h"
 
 
 #define SCREENWIDTH 800
 #define SCREENHEIGHT 450
 
+void printf_colcell(CollisionGridCell cell) {
+	printf("Cell %d: (id: %d, inhabitants: %d) ", cell.id, cell.id, cell.num_inhabitants);
+	printf("[");
+	for (int i=0; i<cell.num_inhabitants; i++) {
+		printf("%d,", cell.inhabitants[i]);
+	}
+	printf("]\n");
+}
+
 void printf_colgrid(CollisionGrid *cg) {
 	for (int i=0; i<cg->num_cells; i++) {
-		printf("Cell %d: \n", i);
 		CollisionGridCell cell = cg->cells[i];
+		printf_colcell(cell);
 	}
 }
+
 
 int main() {
 
 	/** Collision Grid **/
-	ColGrid grid;
+	CollisionGrid grid;
 	cg_init_colgrid(&grid);
 
 	/** **/
@@ -70,9 +81,9 @@ int main() {
 	int x = 100;
 	int y = 15;
 	for (int i=0; i<200; i++) {
-		
+
 		Entity e = ccs_add_entity(&ecs);
-		
+
 		Position *p = ccs_add_component(&ecs, e, C_Position);
 		p->x = x;
 		p->y = y;
@@ -86,12 +97,16 @@ int main() {
 		}
 
 		Collider *collider = ccs_add_component(&ecs, e, C_Collider);
-		collider->width = 8;
-		collider->height = 8;
-		collider->offset_x = -4;
-		collider->offset_y = -4;
-		collider->cg_index.id = e;
-		cg_update_index(&grid, &collider->cg_index, p->x - 4, p->y - 4, 8, 8);
+		collider->id = e;
+		collider->pos_x = p->x;
+		collider->pos_y = p->y;
+		collider->shape.type = COL_RECT;
+		collider->shape.data.rect.x = p->x - 4;
+		collider->shape.data.rect.y = p->y - 4;
+		collider->shape.data.rect.width = 8;
+		collider->shape.data.rect.height = 8;
+		collider->inhabited[0] = -1;
+		cg_update_index(&grid, collider, p->x - 4, p->y - 4, 8, 8);
 	}
 
 
@@ -106,8 +121,17 @@ int main() {
 		if (IsMouseButtonPressed(0)) {
 			Vector2 mouse = GetMousePosition();
 			CollisionGridCell clicked_cell = cg_get_cell_id_at_pos(&grid, mouse.x, mouse.y);
-			printf("Clicked %d\n", clicked_cell.id);
-			
+
+			for (int in=0; in<clicked_cell.num_inhabitants; in++) {
+				Entity ent = clicked_cell.inhabitants[in];
+				Collider *c = ccs_get_component(&ecs, ent, C_Collider);
+				CollisionRect r = c->shape.data.rect;
+				if (point_in_square(mouse.x, mouse.y, r.x, r.y, r.width, r.height)) {
+
+					printf("Clicked entity %d\n", ent);
+				}
+			}
+
 		}
 
 		/* DRAW */
