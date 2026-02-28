@@ -116,6 +116,8 @@ int main() {
 
 	printf_colgrid(&grid);
 
+	ccs_remove_component(&ecs, 1, C_Position);
+
 	while (!WindowShouldClose())
 	{
 		/* UPDATE */
@@ -133,7 +135,7 @@ int main() {
 
 					//cg_remove_index(&grid, c);
 					//in--;
-					ccs_remove_entity(&ecs, ent);
+					//ccs_remove_entity(&ecs, ent);
 				}
 			}
 
