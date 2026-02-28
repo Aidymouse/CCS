@@ -1,7 +1,7 @@
 
 #define NOB_IMPLEMENTATION
 
-#include "nob.h"
+#include "../nob.h"
 
 #define PROGRAM_NAME "Game"
 
@@ -16,9 +16,10 @@ int main(int argc, char **argv) {
 
 	nob_cmd_append(&cmd, "-g");
 
+	nob_cmd_append(&cmd, "-I../include");
 	nob_cmd_append(&cmd, "-Iinclude");
-	nob_cmd_append(&cmd, "-Llib");
-	nob_cmd_append(&cmd, "-Wl,-rpath,./lib");
+	nob_cmd_append(&cmd, "-L../lib");
+	nob_cmd_append(&cmd, "-Wl,-rpath,../lib");
 	nob_cmd_append(&cmd, "-lraylib");
 
 	// Other stuff
