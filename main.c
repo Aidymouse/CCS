@@ -135,8 +135,8 @@ int main() {
 
 					//cg_remove_index(&grid, c);
 					//in--;
-					//ccs_remove_entity(&ecs, ent);
-					ccs_remove_component(&ecs, ent, C_Position);
+					ccs_remove_entity(&ecs, ent);
+					//ccs_remove_component(&ecs, ent, C_Position);
 				}
 			}
 
