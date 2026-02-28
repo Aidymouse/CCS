@@ -25,12 +25,14 @@ int main() {
 	ECS ecs;
 	ccs_init_ecs(&ecs);
 
+	printf("Test Start | Max Entities: %d, Max Components: %d, Max Systems: %d\n", MAX_CCS_ENTITIES, MAX_CCS_COMPONENTS, MAX_CCS_SYSTEMS);
+
 	ccstest(ccs_entity_exists(&ecs, 1) == false, "Entity that does not exist exists");
-	printf("Test | Non-existant Entity Not Exists - PASS\n");
+	printf("Test | Non-existent Entity Not Exists - PASS\n");
 
 	/** Add Entity **/
 	Entity e = ccs_add_entity(&ecs);
-	ccstest(e != 0, "Failed to add entity");
+	ccstest(e != -1, "Failed to add entity");
 	ccstest(ccs_get_signature_for_entity(&ecs, e) != 0, "Entity signature not updated");
 
 	Entity e2 = ccs_add_entity(&ecs);
@@ -85,8 +87,7 @@ int main() {
 
 	printf("Test | Remove Entity - PASS\n");
 
-	printf("Yippee! All passed.\n");
-
+	printf("\n\nYippee! All passed.\n");
 
 	return 0;
 }
