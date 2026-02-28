@@ -50,7 +50,9 @@
 // #include "components.h"
 // #include "systems.h"
 
-#define MAX_CCS_ENTITIES 4
+#ifndef MAX_CCS_ENTITIES
+	#define MAX_CCS_ENTITIES 50
+#endif
 #define MAX_CCS_COMPONENTS 32
 #define MAX_CCS_SYSTEMS 8
 
@@ -109,10 +111,15 @@ typedef enum CCS_Systems {
 
 /** CCS_System Data **/
 typedef struct CCS_System {
+	/* Swapback Array of registered entity IDs */
     CCS_Entity registered_entities[MAX_CCS_ENTITIES];
-	CCS_Entity ent_to_reg_idx[MAX_CCS_ENTITIES]; // CCS_Entity-1 is index into this array = idx into registered arr
+	/* Entity index into this array gives the index of it's position in registered entities */
+	CCS_Entity ent_to_reg_idx[MAX_CCS_ENTITIES]; 
+	/* The required signature */
 	CCS_Signature required_signature;
+	/* The number of registered entitires (to determine length of array) */
 	int num_registered;
+	/* Systems ID for debug */
 	int id;
 } CCS_System;
 
@@ -372,11 +379,11 @@ void ccs_remove_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 		int last_idx = comp_array->num_components-1; \
 \
 		CCS_Entity at_end = comp_array->comp_idx_to_ent[last_idx]; \
-		comp_array->ent_to_comp_idx[at_end-1] = comp_idx; \
+		comp_array->ent_to_comp_idx[at_end] = comp_idx; \
 		comp_array->comp_idx_to_ent[comp_idx] = at_end; \
 \
 		comp_array->ent_to_comp_idx[ent] = -1; \
-		comp_array->comp_idx_to_ent[last_idx] = 0; \
+		comp_array->comp_idx_to_ent[last_idx] = -1; \
 \
 		comp_array->components[comp_idx] = comp_array->components[last_idx]; \
 \
