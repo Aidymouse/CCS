@@ -5,10 +5,27 @@
 //#define CCS_OPT_NO_HELPER_TYPES
 #define CCS_IMPLEMENTATION
 
-#include "systems.h"
-#include "components.h"
-
 #define MAX_CCS_ENTITIES 2 // Custom define for tests
+
+/** Test Components **/
+#define CCS_COMPONENTS \
+	Component(Position, 1) \
+	Component(Velocity, 2) \
+
+typedef struct Position {
+	float x; 
+	float y;
+} Position;
+
+typedef struct Velocity {
+	float x_speed; 
+	float y_speed;
+} Velocity;
+
+/** Test Systems **/
+#define CCS_SYSTEMS \
+	System(Move, CB_Position | CB_Velocity) \
+
 #include "ccs.h"
 
 #define ccstest(condition, message) if (condition == false) { \
