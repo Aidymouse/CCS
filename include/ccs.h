@@ -50,7 +50,7 @@
 // #include "components.h"
 // #include "systems.h"
 
-#define MAX_CCS_ENTITIES 2
+#define MAX_CCS_ENTITIES 4
 #define MAX_CCS_COMPONENTS 32
 #define MAX_CCS_SYSTEMS 8
 
@@ -72,12 +72,15 @@ typedef uint32_t CCS_Signature; // Limits max components to 32 tho...
 
 
 /** Construct components enum **/
+/** C_{component_name} **/
 #define Component(c, num) C_##c,
 typedef enum CCS_Components {
 	CCS_COMPONENTS
 } CCS_Components;
 #undef Component
 
+/** Construct enum of component to their bit position in the signature **/
+/** CB_{component_name} = 2 to the power of position **/
 #define Component(c, num) CB_##c = 1 << num,
 typedef enum CCS_ComponentBit {
 	CCS_COMPONENTS

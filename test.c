@@ -5,7 +5,6 @@
 //#define CCS_OPT_NO_HELPER_TYPES
 #define CCS_IMPLEMENTATION
 
-
 #include "systems.h"
 #include "components.h"
 
