@@ -358,6 +358,8 @@ void ccs_remove_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 		return;
 	}
 
+	CCS_Signature old_sig = *ccs_get_signature_for_entity(ecs, ent);
+
 	CCS_Signature *sig = ccs_get_signature_for_entity(ecs, ent);
 	UnsetBit(*sig, (comp+1));
 
@@ -386,8 +388,8 @@ void ccs_remove_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 	for (int i=0; i<ecs->num_systems; i++) {
 		CCS_System *sys = &ecs->systems[i];
 
-		if (!ccs_entity_satisfies_signature(*sig, sys->required_signature)) {
-			//printf("CCS: CCS_Entity %d no longer qualifies for CCS_System %s\n", ent, CCS_SystemNames[i]);
+		if (ccs_entity_satisfies_signature(old_sig, sys->required_signature) && !ccs_entity_satisfies_signature(*sig, sys->required_signature)) {
+			printf("CCS: CCS_Entity %d no longer qualifies for CCS_System %s\n", ent, CCS_SystemNames[i]);
 			ccs_deregister_from_system(ecs, ent, sys);
 		}
 
