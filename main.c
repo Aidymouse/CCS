@@ -81,7 +81,7 @@ int main() {
 
 	int x = 100;
 	int y = 15;
-	for (int i=0; i<200; i++) {
+	for (int i=0; i<2; i++) {
 
 		Entity e = ccs_add_entity(&ecs);
 
@@ -116,7 +116,7 @@ int main() {
 
 	printf_colgrid(&grid);
 
-	ccs_remove_component(&ecs, 1, C_Position);
+	//ccs_remove_component(&ecs, 0, C_Position);
 
 	while (!WindowShouldClose())
 	{
@@ -136,6 +136,7 @@ int main() {
 					//cg_remove_index(&grid, c);
 					//in--;
 					//ccs_remove_entity(&ecs, ent);
+					ccs_remove_component(&ecs, ent, C_Position);
 				}
 			}
 
