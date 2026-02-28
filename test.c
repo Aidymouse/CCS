@@ -8,6 +8,7 @@
 #include "systems.h"
 #include "components.h"
 
+#define MAX_CCS_ENTITIES 2 // Custom define for tests
 #include "ccs.h"
 
 #define ccstest(condition, message) if (condition == false) { \
@@ -59,9 +60,10 @@ int main() {
 	/** Update Components **/
 
 	/** Remove Components **/
-	ccs_remove_component(&ecs, e, C_Position);
+	ccs_remove_component(&ecs, 0, C_Position);
 	ccstest(ccs_get_component(&ecs, e, C_Position) == 0, "Component not removed");
 	ccstest(ecs.components_Position.ent_to_comp_idx[e] == -1, "Entity to Component Index failed to be updated on Remove");
+	ccstest(ecs.components_Position.comp_idx_to_ent[0] != 0, "Component Idx to Entity should not be 0");
 
 	printf("Test | Remove Components - PASS\n");
 
