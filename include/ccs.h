@@ -117,17 +117,20 @@ typedef struct CCS_System {
 
 /* CCS */
 typedef struct CCS {
+	/** Stack of free entity IDs. Popped when an entity is made and pushed when an eneity is removed. **/
 	CCS_Entity free_entities[MAX_CCS_ENTITIES];
-	int free_ent_cursor; // Points to latest free entity.
+	/** Index of latest free entity */
+	int free_ent_cursor; 
 
 	/* Ent id = idx into this arr */
 	CCS_Signature signatures[MAX_CCS_ENTITIES];
 
-	/** Add component arrays **/
+	/** Component Array Strcuts contain lists of component data + index data about which entities have the data */
 	#define Component(c, _) CCS_Components_##c components_##c;
 	CCS_COMPONENTS
 	#undef Component
 	
+	/** Systems know what signature applies to them and keeps a record of registered entities */
 	CCS_System systems[MAX_CCS_SYSTEMS];
 	int num_systems;
 } CCS;
@@ -185,7 +188,7 @@ const char* CCS_SystemNames[] = {
 
 void ccs_init_ecs(CCS *ecs) {
 	for (int e = 0; e < MAX_CCS_ENTITIES; e++) {
-		ecs->free_entities[e] = MAX_CCS_ENTITIES-e; // 0 is not a valid entity ID
+		ecs->free_entities[e] = e;
 		ecs->signatures[e] = 0;
 	}
 	ecs->free_ent_cursor = MAX_CCS_ENTITIES-1;
@@ -230,16 +233,18 @@ void ccs_init_ecs(CCS *ecs) {
 /** ENTITY METHODS **/
 /********************/
 
-/* Adds an entity, returning it's ID. 0 is not a valid CCS_Entity ID, so this can be used like a boolean to see if an entity was returned */
+/* Adds an entity, returning it's ID. 
+ * @returns -1 if an entity could not be added, or the entities ID if it was.
+ */
 CCS_Entity ccs_add_entity(CCS *ecs) {
 	if (ecs->free_ent_cursor == -1) {
 		printf("CCS: Cannot add entity as we are full!\n");
-		return 0;
+		return -1;
 	}
 
 	CCS_Entity new_ent = ecs->free_entities[ecs->free_ent_cursor];
-	ecs->free_entities[ecs->free_ent_cursor] = 0;
-	ecs->signatures[new_ent-1] = 1;
+	ecs->free_entities[ecs->free_ent_cursor] = -1;
+	ecs->signatures[new_ent] = 1;
 	ecs->free_ent_cursor -= 1;
 	return new_ent;
 }
@@ -260,7 +265,7 @@ void ccs_remove_entity(CCS *ecs, CCS_Entity ent) {
 
 	#undef Component
 	
-	ecs->signatures[ent-1] = 0;
+	ecs->signatures[ent] = 0;
 	ecs->free_ent_cursor += 1;
 	ecs->free_entities[ecs->free_ent_cursor] = ent;
 	
@@ -268,7 +273,7 @@ void ccs_remove_entity(CCS *ecs, CCS_Entity ent) {
 
 /* Get's an entities signature */
 CCS_Signature* ccs_get_signature_for_entity(CCS *ecs, CCS_Entity ent) {
-	return &ecs->signatures[ent-1]; // -1 as 0 is not a valid entity ID
+	return &ecs->signatures[ent]; 
 }
 
 bool ccs_entity_exists(CCS *ecs, CCS_Entity ent) {
@@ -324,7 +329,7 @@ void* ccs_add_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 	#define Component(c, _) if (comp == C_##c) { \
 		CCS_Components_##c *comp_array = &ecs->components_##c; \
 		c *component = &comp_array->components[comp_array->num_components]; \
-		comp_array->ent_to_comp_idx[ent-1] = comp_array->num_components; \
+		comp_array->ent_to_comp_idx[ent] = comp_array->num_components; \
 		comp_array->comp_idx_to_ent[comp_array->num_components] = ent; \
 		comp_array->num_components++; \
 		return component; \
@@ -357,14 +362,14 @@ void ccs_remove_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 	
 	#define Component(c, _) if (comp == C_##c) { \
 		CCS_Components_##c *comp_array = &ecs->components_##c; \
-		int comp_idx = comp_array->ent_to_comp_idx[ent-1]; \
+		int comp_idx = comp_array->ent_to_comp_idx[ent]; \
 		int last_idx = comp_array->num_components-1; \
 \
 		CCS_Entity at_end = comp_array->comp_idx_to_ent[last_idx]; \
 		comp_array->ent_to_comp_idx[at_end-1] = comp_idx; \
 		comp_array->comp_idx_to_ent[comp_idx] = at_end; \
 \
-		comp_array->ent_to_comp_idx[ent-1] = -1; \
+		comp_array->ent_to_comp_idx[ent] = -1; \
 		comp_array->comp_idx_to_ent[last_idx] = 0; \
 \
 		comp_array->components[comp_idx] = comp_array->components[last_idx]; \
@@ -392,6 +397,7 @@ void ccs_remove_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 /** Gets a component for an entity.
  * 1. Checks if entity has the component
  * 2. Acquires the component using records in component array
+ * @returns NULL (0) if component doesn't exist, otherwise pointer to component
  */
 void* ccs_get_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 
@@ -402,7 +408,7 @@ void* ccs_get_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 
 	#define Component(c, _) if (comp == C_##c) { \
 		CCS_Components_##c *comp_array = &ecs->components_##c; \
-		int comp_idx = comp_array->ent_to_comp_idx[ent-1]; \
+		int comp_idx = comp_array->ent_to_comp_idx[ent]; \
 		return &comp_array->components[comp_idx]; \
 	} \
 
@@ -420,23 +426,23 @@ void* ccs_get_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 
 // TODO: test
 void ccs_register_with_system(CCS *ecs, CCS_Entity ent, CCS_System *system) {
-	if (system->ent_to_reg_idx[ent-1] != -1) { return; }
+	if (system->ent_to_reg_idx[ent] != -1) { return; }
 	system->registered_entities[system->num_registered] = ent;
-	system->ent_to_reg_idx[ent-1] = system->num_registered;
+	system->ent_to_reg_idx[ent] = system->num_registered;
 	system->num_registered += 1;
 }
 
 void ccs_deregister_from_system(CCS *ecs, CCS_Entity ent, CCS_System *system) {
-	int ents_idx = system->ent_to_reg_idx[ent-1];
+	int ents_idx = system->ent_to_reg_idx[ent];
 	int last_idx = system->num_registered-1;
 	CCS_Entity last_ent = system->registered_entities[last_idx];
 
 	system->registered_entities[ents_idx] = system->registered_entities[last_idx];
 	system->registered_entities[last_idx] = 0; // Not technically needed
 
-	system->ent_to_reg_idx[last_ent-1] = ents_idx;
+	system->ent_to_reg_idx[last_ent] = ents_idx;
 
-	system->ent_to_reg_idx[ent-1] = -1; // Not technically needed
+	system->ent_to_reg_idx[ent] = -1; // Not technically needed
 
 	system->num_registered -= 1;
 }
