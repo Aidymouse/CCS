@@ -50,7 +50,7 @@
 // #include "components.h"
 // #include "systems.h"
 
-#define MAX_CCS_ENTITIES 4
+#define MAX_CCS_ENTITIES 2
 #define MAX_CCS_COMPONENTS 32
 #define MAX_CCS_SYSTEMS 8
 
@@ -225,7 +225,7 @@ void ccs_init_ecs(CCS *ecs) {
 	#undef System
 
 	ecs->num_systems = sys_idx;
-	printf("CCS: Number of CCS_Systems: %d\n", ecs->num_systems);
+	printf("CCS: Number of CCS_Systems on init: %d\n", ecs->num_systems);
 
 	//ecs->systems = { 0 };
 }
@@ -354,7 +354,7 @@ void* ccs_add_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 void ccs_remove_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 
 	if (!ccs_entity_has_component(ecs, ent, comp)) {
-		printf("CCS: Tried to remove %s from CCS_Entity %d, but it does not have it\n", ComponentNames[comp], ent);
+		//printf("CCS: Tried to remove %s from CCS_Entity %d, but it does not have it\n", ComponentNames[comp], ent);
 		return;
 	}
 
@@ -387,7 +387,7 @@ void ccs_remove_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 		CCS_System *sys = &ecs->systems[i];
 
 		if (!ccs_entity_satisfies_signature(*sig, sys->required_signature)) {
-			printf("CCS: CCS_Entity %d no longer qualifies for CCS_System %s\n", ent, CCS_SystemNames[i]);
+			//printf("CCS: CCS_Entity %d no longer qualifies for CCS_System %s\n", ent, CCS_SystemNames[i]);
 			ccs_deregister_from_system(ecs, ent, sys);
 		}
 
@@ -403,7 +403,7 @@ void ccs_remove_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 void* ccs_get_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 
 	if (!ccs_entity_has_component(ecs, ent, comp)) {
-		printf("CCS: Can't get %s from CCS_Entity %d, it does not have it!\n", ComponentNames[comp], ent);
+		//printf("CCS: Can't get %s from CCS_Entity %d, it does not have it!\n", ComponentNames[comp], ent);
 		return 0;
 	}
 
@@ -428,7 +428,7 @@ void* ccs_get_component(CCS *ecs, CCS_Entity ent, CCS_Components comp) {
 // TODO: test
 void ccs_register_with_system(CCS *ecs, CCS_Entity ent, CCS_System *system) {
 	if (system->ent_to_reg_idx[ent] != -1) {
-	    printf("CCS: Attempting to register entity %d from system it is already registered with.\n", ent);
+	    //printf("CCS: Attempting to register entity %d from system it is already registered with.\n", ent);
 	    return;
 	}
 	system->registered_entities[system->num_registered] = ent;
@@ -439,7 +439,7 @@ void ccs_register_with_system(CCS *ecs, CCS_Entity ent, CCS_System *system) {
 void ccs_deregister_from_system(CCS *ecs, CCS_Entity ent, CCS_System *system) {
 	int ents_idx = system->ent_to_reg_idx[ent];
 	if (ents_idx == -1) {
-	    printf("CCS: Attempting to de-register entity %d from system %d it is not registered in.\n", ent, system->id);
+	    //printf("CCS: Attempting to de-register entity %d from system %d it is not registered in.\n", ent, system->id);
 		return;
 	}
 	int last_idx = system->num_registered-1;
