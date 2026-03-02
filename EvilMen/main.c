@@ -5,52 +5,19 @@
 #define COLGRID_IMPLEMENTATION
 #include "ColGrid.h"
 
-
-#include "Collisions.h"
-
-/** Components **/
-#define CCS_COMPONENTS \
-	Component(Position, 1) \
-	Component(Velocity, 2) \
-	Component(Collider, 3) \
-	Component(ManAI, 4) \
-
-typedef struct Position {
-	float x;
-	float y;
-	float z;
-} Position;
-
-// All colliders are squares these days
-typedef CollisionGridIndex Collider;
-
-typedef struct Velocity {
-	float x;
-	float y;
-	float z;
-} Velocity;
-
-typedef struct ManAI {
-	int behaviour;
-} ManAI;
-
-#define CCS_SYSTEMS \
-	System(Draw, CB_Position) \
-	System(Move, CB_Position | CB_Velocity) \
-	System(ManDecider, CB_ManAI | CB_Position) \
-
-#define CCS_IMPLEMENTATION
-
-#include "ccs.h"
-#define VEC2_IMPLEMENTATION
-#include "Vec2.h"
-#include "raylib.h"
 #define COLLISIONS_IMPLEMENTATION
 #include "Collisions.h"
 
+#include "CCS_Setup.h"
+#define CCS_IMPLEMENTATION
+#include "ccs.h"
 
-#define SCREENWIDTH 800
-#define SCREENHEIGHT 450
+#define VEC2_IMPLEMENTATION
+#include "Vec2.h"
+#include "raylib.h"
+
+#define SCREENWIDTH 700
+#define SCREENHEIGHT 700
 
 void printf_colcell(CollisionGridCell cell) {
 	printf("Cell %d: (id: %d, inhabitants: %d) ", cell.id, cell.id, cell.num_inhabitants);
@@ -80,8 +47,8 @@ int main() {
 	ccs_init_ecs(&ecs);
 
 	int x = 100;
-	int y = 15;
-	for (int i=0; i<2; i++) {
+	int y = 20;
+	for (int i=0; i<200; i++) {
 
 		Entity e = ccs_add_entity(&ecs);
 
@@ -89,13 +56,18 @@ int main() {
 		p->x = x;
 		p->y = y;
 		x += 100;
-		if (x > SCREENWIDTH) {
+		if (x > SCREENWIDTH-100) {
 			x = 50;
 			y += 15;
 			if ((y / 15) % 2 == 1) {
 				x = 100;
 			}
 		}
+
+		Visible *v = ccs_add_component(&ecs, e, C_Visible);
+		v->offset_x = -4;
+		v->offset_y = -4;
+		v->color = BLUE;
 
 		Collider *collider = ccs_add_component(&ecs, e, C_Collider);
 		collider->id = e;
@@ -133,9 +105,9 @@ int main() {
 
 					printf("Clicked entity %d\n", ent);
 
-					//cg_remove_index(&grid, c);
-					//in--;
+					cg_remove_index(&grid, c);
 					ccs_remove_entity(&ecs, ent);
+					break;
 					//ccs_remove_component(&ecs, ent, C_Position);
 				}
 			}
@@ -152,20 +124,21 @@ int main() {
 		for (int en=0; en<draw_sys.num_registered; en++) {
 			Entity ent = draw_sys.registered_entities[en];
 			Position *ps = ccs_get_component(&ecs, ent, C_Position);
+			Visible *vs = ccs_get_component(&ecs, ent, C_Visible);
 
-			if (ps->z > 0) {
-				DrawEllipse(ps->x, ps->y, 4, 2, GRAY);
-			}
-			DrawRectangle(ps->x-4, ps->y - ps->z - 8, 8, 8, BLUE);
+			DrawRectangle(ps->x + vs->offset_x, ps->y + vs->offset_y, 8, 8, vs->color);
+			vs->offset_x += 1;
 		}
 		EndDrawing();
 
 		// Debug grid
+		/*
 		for (int row=0; row<15; row++) {
 			for (int col=0; col<15; col++) {
 				DrawRectangleLines(row*CELL_SIZE, col*CELL_SIZE, CELL_SIZE, CELL_SIZE, RED);
 			}
 		}
+		*/
 
 	}
 
