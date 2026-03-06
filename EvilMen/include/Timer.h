@@ -9,11 +9,11 @@ typedef struct Timer {
 
 float timer_tick(Timer *timer, float tick);
 void timer_stop(Timer *timer);
-void timer_resume(Timer *timer):
+void timer_resume(Timer *timer);
 void timer_reset(Timer *timer);
 void timer_set(Timer *timer, float new_time);
 
-#ifdef _TIMER_IMPLEMENTATION_
+#ifdef TIMER_IMPLEMENTATION
 
 float timer_tick(Timer *timer, float tick) {
 	if (timer->active == 1) {
@@ -37,8 +37,6 @@ void timer_reset(Timer *timer) {
 void timer_set(Timer *timer, float new_time) {
 	timer->time_remaining = new_time;
 }
-
-void t
 
 #endif
 

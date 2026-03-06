@@ -1,5 +1,6 @@
 
 #include "raylib.h"
+#include "ManAI.h"
 
 #define MAX_CCS_ENTITIES 300
 
@@ -9,8 +10,7 @@
 	Component(Velocity, 2) \
 	Component(Collider, 3) \
 	Component(Visible, 4) \
-	
-	//Component(ManAI, 5) \
+	Component(ManAI, 5) \
 
 typedef struct Position {
 	float x;
@@ -32,11 +32,9 @@ typedef struct Visible {
 	Color color;
 } Visible;
 
-typedef struct ManAI {
-	int behaviour;
-} ManAI;
 
 /** SYSTEMS **/
 #define CCS_SYSTEMS \
 	System(Draw, CB_Position | CB_Visible) \
 	System(Move, CB_Position | CB_Velocity) \
+	System(ManDecision, CB_ManAI) \
