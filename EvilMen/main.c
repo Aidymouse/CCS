@@ -95,7 +95,7 @@ int main() {
 		/* UPDATE */
 		if (IsMouseButtonPressed(0)) {
 			Vector2 mouse = GetMousePosition();
-			CollisionGridCell clicked_cell = cg_get_cell_id_at_pos(&grid, mouse.x, mouse.y);
+			CollisionGridCell clicked_cell = cg_get_cell_at_pos(&grid, mouse.x, mouse.y);
 
 			for (int in=0; in<clicked_cell.num_inhabitants; in++) {
 				Entity ent = clicked_cell.inhabitants[in];
@@ -107,6 +107,9 @@ int main() {
 
 					cg_remove_index(&grid, c);
 					ccs_remove_entity(&ecs, ent);
+
+					printf_colgrid(&grid);
+
 					break;
 					//ccs_remove_component(&ecs, ent, C_Position);
 				}
@@ -127,17 +130,16 @@ int main() {
 			Visible *vs = ccs_get_component(&ecs, ent, C_Visible);
 
 			DrawRectangle(ps->x + vs->offset_x, ps->y + vs->offset_y, 8, 8, vs->color);
-			vs->offset_x += 1;
 		}
 		EndDrawing();
 
 		// Debug grid
-		/*
-		for (int row=0; row<15; row++) {
-			for (int col=0; col<15; col++) {
-				DrawRectangleLines(row*CELL_SIZE, col*CELL_SIZE, CELL_SIZE, CELL_SIZE, RED);
+		for (int row=0; row<CELLS_DOWN; row++) {
+			for (int col=0; col<CELLS_ACROSS; col++) {
+				DrawRectangleLines(col*CELL_SIZE, row*CELL_SIZE, CELL_SIZE, CELL_SIZE, RED);
 			}
 		}
+		/*
 		*/
 
 	}

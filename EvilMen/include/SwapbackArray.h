@@ -6,6 +6,7 @@ int sba_remove(int *sb_arr, int value, int num_values);
 
 #ifdef SWAPBACK_ARRAY_IMPLEMENTATION
 
+/* Deduplicated insert. Not very efficient :/ */
 int sba_insert(int *sb_arr, int value, int num_values) {
 	for (int i=0; i<num_values; i++) {
 		if (sb_arr[i] == value) { 
@@ -29,6 +30,7 @@ int sba_remove(int *sb_arr, int value, int num_values) {
 
 	return 0;
 }
+
 
 #endif
 
