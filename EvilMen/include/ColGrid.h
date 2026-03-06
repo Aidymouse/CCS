@@ -4,6 +4,7 @@
 #define _COLGRID_H_
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "Collisions.h"
 
 #include "SwapbackArray.h"
@@ -30,8 +31,6 @@ typedef struct CollisionGrid {
 
 typedef struct CollisionGridIndex {
 	int id;
-	float pos_x;
-	float pos_y;
 	CollisionShape shape;
 	/** The inhabited cells. If every object is smaller than the grid size, the max this can be is 4 **/
 	int inhabited[MAX_INHABITED_CELLS];
@@ -43,7 +42,7 @@ typedef struct CollisionGridIndex {
 void cg_init_colgrid(CollisionGrid *cg);
 void cg_free_colgrid(CollisionGrid *cg);
 void cg_init_cell(CollisionGridCell *cell, int id, int init_inhabitants);
-void cg_update_index(CollisionGrid *cg, CollisionGridIndex *cg_index, float pos_x, float pos_y, float width, float height);
+void cg_update_index(CollisionGrid *cg, CollisionGridIndex *cg_index);
 void cg_remove_index(CollisionGrid *cg, CollisionGridIndex *cg_index);
 CollisionGridCell cg_get_cell_at_pos(CollisionGrid *cg, float pos_x, float pos_y);
 int cg_does_cell_exist(int row, int col);
@@ -99,7 +98,25 @@ int cg_get_cell_id_for_pos(int x, int y) {
 
 
 /** Takes an index and updates it and the colgrid based on a new position **/
-void cg_update_index(CollisionGrid *cg, CollisionGridIndex *cg_index, float pos_x, float pos_y, float width, float height) {
+void cg_update_index(CollisionGrid *cg, CollisionGridIndex *cg_index) {
+
+	float width;
+	float height;
+
+	if (cg_index->shape.type == COL_RECT) {
+		width = cg_index->shape.data.rect.width;
+		height = cg_index->shape.data.rect.height;
+	} else if (cg_index->shape.type == COL_CIRCLE) {
+		width = cg_index->shape.data.circle.radius*2;
+		height = cg_index->shape.data.circle.radius*2;
+	} else {
+		printf("Refusing to update index because I don't know what shape it is.\n");
+		return;
+	}
+
+	float pos_x = cg_index->shape.x + cg_index->shape.offset_x;
+	float pos_y = cg_index->shape.y + cg_index->shape.offset_y;
+
 
 	// Reset all cells
 	for (int c = 0; c<MAX_INHABITED_CELLS; c++) {

@@ -48,7 +48,7 @@ int main() {
 
 	int x = 100;
 	int y = 20;
-	for (int i=0; i<200; i++) {
+	for (int i=0; i<1; i++) {
 
 		Entity e = ccs_add_entity(&ecs);
 
@@ -71,15 +71,15 @@ int main() {
 
 		Collider *collider = ccs_add_component(&ecs, e, C_Collider);
 		collider->id = e;
-		collider->pos_x = p->x;
-		collider->pos_y = p->y;
+		collider->shape.x = p->x;
+		collider->shape.y = p->y;
 		collider->shape.type = COL_RECT;
-		collider->shape.data.rect.x = p->x - 4;
-		collider->shape.data.rect.y = p->y - 4;
+		collider->shape.offset_x = -4;
+		collider->shape.offset_y = -4;
 		collider->shape.data.rect.width = 8;
 		collider->shape.data.rect.height = 8;
 		collider->inhabited[0] = -1;
-		cg_update_index(&grid, collider, p->x - 4, p->y - 4, 8, 8);
+		cg_update_index(&grid, collider);
 	}
 
 
@@ -101,7 +101,16 @@ int main() {
 				Entity ent = clicked_cell.inhabitants[in];
 				Collider *c = ccs_get_component(&ecs, ent, C_Collider);
 				CollisionRect r = c->shape.data.rect;
-				if (point_in_square(mouse.x, mouse.y, r.x, r.y, r.width, r.height)) {
+				CollisionShape mouse_point = {
+					.type = COL_POINT,
+					.offset_x = 0,
+					.offset_y = 0,
+							.x = mouse.x,
+							.y = mouse.y,
+					.data = {
+					}
+				};
+				if (point_in_square_shapes(mouse_point, c->shape)) {
 
 					printf("Clicked entity %d\n", ent);
 
