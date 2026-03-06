@@ -37,11 +37,13 @@ typedef struct CollisionShape {
 /* Declarations */
 int point_in_square(float px, float py, float rx, float ry, float rw, float rh);
 int point_in_circle(float px, float py, float cx, float cy, float cr);
+int rect_circle(float rx, float ry, float rw, float rh, float cx, float cy, float cr);
 
 int point_in_square_shapes(CollisionShape point, CollisionShape rect);
 
+int rect_circle_shapes(CollisionShape rect, CollisionShape circle);
+
 #ifdef COLLISIONS_IMPLEMENTATION
-#endif
 
 int point_in_square(float px, float py, float rx, float ry, float rw, float rh) {
 	return px >= rx && px <= rx+rw && py >= ry && py <= ry+rh;
@@ -49,6 +51,22 @@ int point_in_square(float px, float py, float rx, float ry, float rw, float rh) 
 
 int point_in_circle(float px, float py, float cx, float cy, float cr) {
 	return (px-cx)*(px-cx) + (py-cy)*(py-cy) <= (cr*cr);
+}
+
+int rect_circle(float rx, float ry, float rw, float rh, float cx, float cy, float cr) {
+	// Initializing this to cx and cy stops phsing through the circle sometimes somehow
+	float testX = cx;
+	float testY = cy;
+
+	if (cx <= rx) { testX = rx; }
+	else if (cx >= rx+rw) { testX = rx+rw; }
+
+	if (cy <= ry) { testY = ry; }
+	else if (cy >= ry+rh) { testY = ry+rh; }
+
+	float distX = cx-testX;
+	float distY = cy-testY;
+	return (distX*distX) + (distY*distY) < (cr*cr);
 }
 
 int point_in_square_shapes(CollisionShape point, CollisionShape rect) {
@@ -65,4 +83,12 @@ int point_in_cicle_shapes(CollisionShape point, CollisionShape circle) {
 	);
 }
 
-#endif
+int rect_circle_shapes(CollisionShape rect, CollisionShape circle) {
+	return rect_circle(
+		rect.x+rect.offset_x, rect.y+rect.offset_y, rect.data.rect.width, rect.data.rect.height,
+		circle.x+circle.offset_x, circle.y+circle.offset_y, circle.data.circle.radius
+	);
+}
+
+#endif // COLLISIONS_IMPLEMENTATION
+#endif // _H_COLLISIONS_

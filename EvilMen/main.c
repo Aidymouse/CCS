@@ -7,12 +7,12 @@
 #include "Random.h"
 #define VEC2_IMPLEMENTATION
 #include "Vec2.h"
+#define COLLISIONS_IMPLEMENTATION
+#include "Collisions.h"
 
 #define COLGRID_IMPLEMENTATION
 #include "ColGrid.h"
 
-#define COLLISIONS_IMPLEMENTATION
-#include "Collisions.h"
 
 #include "CCS_Setup.h"
 #define CCS_IMPLEMENTATION
@@ -145,10 +145,23 @@ int main() {
 				v->y = to_dest.y;
 
 				Collider *col = ccs_get_component(&ecs, man_ent, C_Collider);
-				// TODO
-				if (point_in_circle_shapes((CollisionS)) {
+
+				CollisionShape center_circle = {
+					.x = SCREENWIDTH/2,
+					.y = SCREENHEIGHT/2,
+					.offset_x = 0, 
+					.offset_y = 0,
+					.data = {
+						.circle = {
+							.radius = 120
+						}
+					}
+				};
+
+				if (rect_circle_shapes(col->shape, center_circle)) {
 					v->x = 0;
 					v->y = 0;
+					ai->behaviour = MANB_ATTACK;
 				}
 			}
 
